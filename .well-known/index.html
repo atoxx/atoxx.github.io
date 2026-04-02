@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Match</title>
+  <style>
+    body { background: #0a0a23; color: white; font-family: sans-serif;
+           display: flex; flex-direction: column; align-items: center;
+           justify-content: center; min-height: 100vh; margin: 0; padding: 24px; }
+    img  { width: 220px; height: 220px; object-fit: cover;
+           border: 8px solid white; box-shadow: 6px 6px 0 #000; margin-bottom: 24px; }
+    h1   { font-size: 1.4rem; margin: 0 0 8px; text-align: center; }
+    p    { opacity: 0.6; margin: 4px 0; text-align: center; }
+    .links { display: flex; gap: 16px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+    .links a { color: white; text-decoration: none; opacity: 0.8; font-size: 0.9rem;
+                border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; }
+  </style>
+</head>
+<body>
+  <script>
+    const p = new URLSearchParams(window.location.search);
+    const artwork = p.get("artwork");
+    const title   = p.get("title")  || "Unknown";
+    const artist  = p.get("artist") || "";
+    const album   = p.get("album")  || "";
+    const year    = p.get("year")   || "";
+
+    if (artwork) {
+      const img = document.createElement("img");
+      img.src = artwork;
+      document.body.appendChild(img);
+    }
+    const h1 = document.createElement("h1");
+    h1.textContent = title + (year ? "  " + year : "");
+    document.body.appendChild(h1);
+
+    if (artist) { const p2 = document.createElement("p"); p2.textContent = artist; document.body.appendChild(p2); }
+    if (album)  { const p3 = document.createElement("p"); p3.textContent = album;  document.body.appendChild(p3); }
+
+    const platforms = [
+      { key: "spotify",    label: "Spotify" },
+      { key: "appleMusic", label: "Apple Music" },
+      { key: "youtube",    label: "YouTube Music" },
+      { key: "amazon",     label: "Prime Music" },
+    ];
+    const links = document.createElement("div");
+    links.className = "links";
+    platforms.forEach(({ key, label }) => {
+      const url = p.get(key);
+      if (url) {
+        const a = document.createElement("a");
+        a.href = url; a.textContent = label;
+        links.appendChild(a);
+      }
+    });
+    document.body.appendChild(links);
+  </script>
+</body>
+</html>
