@@ -1,77 +1,193 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Match</title>
 
-  <!-- iMessage / WhatsApp preview -->
-  <meta property="og:title" content="Match — Identify this song">
+  <meta property="og:title" id="meta-title" content="Match — Identify this song">
   <meta property="og:description" content="Tap to see what song this is and stream it instantly">
-  <meta property="og:image" content="https://atoxx.github.io/preview.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://atoxx.github.io">
-  <meta name="twitter:card" content="summary_large_image">
-
-  <!-- Web app / remove browser UI when added to home screen -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Match">
-  <meta name="mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="https://atoxx.github.io/preview.png">
 
   <style>
-    body { background: #0a0a23; color: white; font-family: sans-serif;
-           display: flex; flex-direction: column; align-items: center;
-           justify-content: center; min-height: 100vh; margin: 0; padding: 24px; }
-    img  { width: 220px; height: 220px; object-fit: cover;
-           border: 8px solid white; box-shadow: 6px 6px 0 #000; margin-bottom: 24px; }
-    h1   { font-size: 1.4rem; margin: 0 0 8px; text-align: center; }
-    p    { opacity: 0.6; margin: 4px 0; text-align: center; }
-    .links { display: flex; gap: 16px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
-    .links a { color: white; text-decoration: none; opacity: 0.8; font-size: 0.9rem;
-                border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; }
+    :root {
+      --bg-dark: #0f0f24; /* Matching your SwiftUI Color(red: 0.06, green: 0.06, blue: 0.14) */
+      --card-white: #ffffff;
+    }
+
+    body, html {
+      margin: 0; padding: 0;
+      background-color: white; /* Matches Tile 1 background */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      height: 100%;
+    }
+
+    /* --- TILE 1: BACKGROUND ARTWORK --- */
+    .background-layer {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(0,0,0,0.04) 0%, rgba(255,255,255,0) 70%);
+    }
+
+    #bg-artwork {
+      width: 260px;
+      height: 260px;
+      object-fit: cover;
+      border: 10px solid white;
+      box-shadow: 10px 10px 20px rgba(0,0,0,0.2);
+      transform: rotate(-2deg); /* Matches SwiftUI .rotationEffect */
+    }
+
+    /* --- TILE 2: SCROLLABLE CARD --- */
+    .scroll-container {
+      position: relative;
+      z-index: 2;
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .spacer {
+      height: calc(100vh - 160px); /* Matches your screenH - 150 spacer */
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      background: var-bg-dark;
+      background-color: #0f0f24;
+      color: white;
+      min-height: 100vh;
+      padding: 0 24px 100px 24px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* THE WAVE SHAPE */
+    .wave-header {
+      position: absolute;
+      top: -45px; /* Pulls wave above the card div */
+      left: 0;
+      width: 100%;
+      height: 50px;
+      fill: #0f0f24;
+      stroke: white;
+      stroke-width: 1px;
+    }
+
+    /* CONTENT STYLING */
+    .content-top { padding-top: 60px; } /* Clears the wave peak */
+
+    h1 { font-size: 1.8rem; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+    .year { font-size: 2.2rem; opacity: 0.75; font-weight: 800; float: right; margin-top: -10px; }
+    .artist { font-size: 1.1rem; opacity: 0.7; font-weight: 500; margin-top: 8px; }
+    .album { font-size: 0.9rem; opacity: 0.45; font-style: italic; margin-top: 4px; }
+
+    hr { border: none; height: 1px; background: rgba(255,255,255,0.1); margin: 30px 0; }
+
+    /* STREAMING LINKS */
+    .links-grid {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 20px;
+      scrollbar-width: none;
+    }
+    .links-grid::-webkit-scrollbar { display: none; }
+
+    .platform-btn {
+      flex: 0 0 72px;
+      text-align: center;
+      text-decoration: none;
+      color: white;
+    }
+    .platform-btn img {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: #222;
+      margin-bottom: 8px;
+    }
+    .platform-btn span {
+      display: block;
+      font-size: 0.7rem;
+      opacity: 0.7;
+      line-height: 1.2;
+    }
   </style>
 </head>
 <body>
+
+  <div class="background-layer">
+    <img id="bg-artwork" src="" alt="Artwork">
+  </div>
+
+  <div class="scroll-container">
+    <div class="spacer"></div>
+    
+    <div class="card">
+      <svg class="wave-header" viewBox="0 0 400 50" preserveAspectRatio="none">
+        <path d="M0,40 C140,-10 260,50 400,10 L400,50 L0,50 Z" />
+        <path d="M0,40 C140,-10 260,50 400,10" fill="none" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      </svg>
+
+      <div class="content-top">
+        <span class="year" id="display-year"></span>
+        <h1 id="display-title">Loading...</h1>
+        <p class="artist" id="display-artist"></p>
+        <p class="album" id="display-album"></p>
+      </div>
+
+      <hr>
+
+      <div class="links-grid" id="links-container">
+        </div>
+    </div>
+  </div>
+
   <script>
     const p = new URLSearchParams(window.location.search);
+    
+    // Set UI Texts
+    document.getElementById("display-title").textContent = p.get("title") || "Unknown Track";
+    document.getElementById("display-artist").textContent = p.get("artist") || "Unknown Artist";
+    document.getElementById("display-album").textContent = p.get("album") || "";
+    document.getElementById("display-year").textContent = p.get("year") || "";
+    
+    // Set Background Artwork
     const artwork = p.get("artwork");
-    const title   = p.get("title")  || "Unknown";
-    const artist  = p.get("artist") || "";
-    const album   = p.get("album")  || "";
-    const year    = p.get("year")   || "";
-
     if (artwork) {
-      const img = document.createElement("img");
-      img.src = artwork;
-      document.body.appendChild(img);
+      document.getElementById("bg-artwork").src = artwork;
     }
-    const h1 = document.createElement("h1");
-    h1.textContent = title + (year ? "  " + year : "");
-    document.body.appendChild(h1);
 
-    if (artist) { const p2 = document.createElement("p"); p2.textContent = artist; document.body.appendChild(p2); }
-    if (album)  { const p3 = document.createElement("p"); p3.textContent = album;  document.body.appendChild(p3); }
-
+    // Dynamic Platforms
     const platforms = [
-      { key: "spotify",    label: "Spotify" },
-      { key: "appleMusic", label: "Apple Music" },
-      { key: "youtube",    label: "YouTube Music" },
-      { key: "amazon",     label: "Prime Music" },
+      { key: "spotify", label: "Spotify", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" },
+      { key: "appleMusic", label: "Apple Music", icon: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" },
+      { key: "youtube", label: "YouTube Music", icon: "https://upload.wikimedia.org/wikipedia/commons/6/6a/Youtube_Music_icon.svg" },
+      { key: "amazon", label: "Amazon", icon: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Amazon_icon.svg" }
     ];
-    const links = document.createElement("div");
-    links.className = "links";
-    platforms.forEach(({ key, label }) => {
-      const url = p.get(key);
+
+    const container = document.getElementById("links-container");
+    platforms.forEach(plat => {
+      const url = p.get(plat.key);
       if (url) {
         const a = document.createElement("a");
-        a.href = url; a.textContent = label;
-        links.appendChild(a);
+        a.className = "platform-btn";
+        a.href = url;
+        a.innerHTML = `
+          <img src="${plat.icon}" alt="${plat.label}">
+          <span>${plat.label}</span>
+        `;
+        container.appendChild(a);
       }
     });
-    document.body.appendChild(links);
   </script>
 </body>
 </html>
